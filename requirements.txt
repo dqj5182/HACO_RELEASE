@@ -1,0 +1,15 @@
+easydict
+tqdm
+pytz
+opencv-python
+trimesh
+point-cloud-utils
+chumpy
+pyyaml
+plyfile
+einops
+timm
+smplx
+gdown
+mediapipe
+pyrender==0.1.33
