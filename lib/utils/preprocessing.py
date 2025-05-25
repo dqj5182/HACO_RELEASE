@@ -118,7 +118,7 @@ def gen_trans_from_patch_cv(c_x, c_y, src_width, src_height, dst_width, dst_heig
     return trans
 
 
-def generate_patch_image_contact(cvimg, bbox, scale, rot, do_flip, out_shape, tx=0.0, ty=0.0):
+def generate_patch_image_contact(cvimg, bbox, scale, rot, do_flip, out_shape, tx=0.0, ty=0.0, bkg_color='black'):
     img = cvimg.copy()
     img_height, img_width, img_channels = img.shape
 
@@ -126,6 +126,13 @@ def generate_patch_image_contact(cvimg, bbox, scale, rot, do_flip, out_shape, tx
     bb_c_y = float(bbox[1] + 0.5 * bbox[3])
     bb_width = float(bbox[2])
     bb_height = float(bbox[3])
+
+    if bkg_color == 'white':
+        borderMode=cv2.BORDER_CONSTANT
+        borderValue=(255, 255, 255)
+    else:
+        borderMode=cv2.BORDER_CONSTANT
+        borderValue=(0, 0, 0)
 
     if do_flip:
         img = img[:, ::-1, :]
@@ -137,7 +144,7 @@ def generate_patch_image_contact(cvimg, bbox, scale, rot, do_flip, out_shape, tx
 
     trans = gen_trans_from_patch_cv(bb_c_x, bb_c_y, bb_width, bb_height, 
                                     out_shape[1], out_shape[0], scale, rot)
-    img_patch = cv2.warpAffine(img, trans, (int(out_shape[1]), int(out_shape[0])), flags=cv2.INTER_LINEAR)
+    img_patch = cv2.warpAffine(img, trans, (int(out_shape[1]), int(out_shape[0])), flags=cv2.INTER_LINEAR, borderMode=borderMode, borderValue=borderValue)
     img_patch = img_patch.astype(np.float32)
     inv_trans = gen_trans_from_patch_cv(bb_c_x, bb_c_y, bb_width, bb_height, 
                                         out_shape[1], out_shape[0], scale, rot, inv=True)
@@ -145,7 +152,7 @@ def generate_patch_image_contact(cvimg, bbox, scale, rot, do_flip, out_shape, tx
     return img_patch, trans, inv_trans
 
 
-def augmentation_contact(img, bbox, data_split, enforce_flip=None):
+def augmentation_contact(img, bbox, data_split, enforce_flip=None, bkg_color='black'):
     if data_split == 'train':
         aug_params = get_aug_config_contact()
     else:
@@ -171,7 +178,7 @@ def augmentation_contact(img, bbox, data_split, enforce_flip=None):
     img, trans, inv_trans = generate_patch_image_contact(
         img, bbox, aug_params['scale'], aug_params['rot'], 
         aug_params['do_flip'], cfg.MODEL.input_img_shape, 
-        aug_params['tx'], aug_params['ty']
+        aug_params['tx'], aug_params['ty'], bkg_color
     )
 
     # Apply low-resolution augmentation

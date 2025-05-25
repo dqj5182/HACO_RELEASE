@@ -28,10 +28,6 @@ _**HACO** is a framework for **dense hand contact estimation** that addresses **
 
 
 
-## Code
-
-
-
 ## Installation
 * We recommend you to use an [Anaconda](https://www.anaconda.com/) virtual environment. Install PyTorch >=1.11.0 and Python >= 3.8.0. Our latest HACO model is tested on Python 3.8.20, PyTorch 1.11.0, CUDA 11.3.
 * Setup the environment.
@@ -48,7 +44,9 @@ pip install -r requirements.txt
 ```
 * Download our checkpoints from [OneDrive](https://1drv.ms/u/c/bf7e2a9a100f1dba/Ef18aU5ItbFDgW1sSv3P0l0BGTzN6PlsCnm0q5ecpTWIfQ?e=Y40qsN).
 
-## Quick demo
+
+
+## Quick demo (Image)
 To run HACO on demo images using the [Mediapipe](https://ai.google.dev/edge/mediapipe/solutions/guide) hand detector, please run:
 ```
 python demo.py --backbone {BACKBONE_TYPE} --checkpoint {CKPT_PATH} --input_path {INPUT_PATH}
@@ -62,6 +60,27 @@ python demo.py --backbone hamer --checkpoint release_checkpoint/haco_final_hamer
 # ViT-B (ImageNet initialized) backbone
 python demo.py --backbone vit-b-16 --checkpoint release_checkpoint/haco_final_vit_b_checkpoint.ckpt --input_path asset/example_images
 ```
+
+> Note: The demo includes post-processing to reduce noise in small or sparse contact areas.
+
+## Quick demo (Video)
+Before the demo, please download example videos from [OneDrive](https://1drv.ms/u/c/bf7e2a9a100f1dba/ERsk_D-EubxBi1Usu2bW2hABwy9nxzRxAHutXDxmv85TLw?e=rIjOI7) and save at `asset/example_videos`.<br>
+
+To run HACO on demo videos using the [Mediapipe](https://ai.google.dev/edge/mediapipe/solutions/guide) hand detector, please run:
+```
+python demo_video.py --backbone {BACKBONE_TYPE} --checkpoint {CKPT_PATH} --input_path {INPUT_PATH}
+```
+
+For example,
+```
+# ViT-H (Default, HaMeR initialized) backbone
+python demo_video.py --backbone hamer --checkpoint release_checkpoint/haco_final_hamer_checkpoint.ckpt --input_path asset/example_videos
+
+# ViT-B (ImageNet initialized) backbone
+python demo_video.py --backbone vit-b-16 --checkpoint release_checkpoint/haco_final_vit_b_checkpoint.ckpt --input_path asset/example_videos
+```
+
+> Note: The demo includes post-processing for both spatial smoothing of small contact areas and temporal smoothing across frames to ensure stable contact predictions and hand detections.
 
 
 ## Data

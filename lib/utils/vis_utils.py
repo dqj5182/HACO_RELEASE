@@ -123,8 +123,94 @@ class ContactRenderer():
         IMG = np.hstack(mesh_images)
         return IMG
 
+    def create_scene_demo(self, mesh, img, focal_length=5000, camera_center=250, img_res=500):
+        # Setup the scene
+        scene = pyrender.Scene(bg_color=[1.0, 1.0, 1.0, 1.0],
+                            ambient_light=(0.3, 0.3, 0.3))
+        
+        # Camera
+        camera_pose = np.eye(4)
+        camera_pose[:3, 3] = np.array([0., 0, 2.5])
+        pyrencamera = pyrender.camera.IntrinsicsCamera(
+            fx=focal_length, fy=focal_length,
+            cx=camera_center, cy=camera_center)
+        scene.add(pyrencamera, pose=camera_pose)
 
-    def render_contact(self, img, contact):   
+        # Lighting
+        light = pyrender.PointLight(color=[1.0, 1.0, 1.0], intensity=1)
+        light_pose = np.eye(4)
+        for lp in [[1, 1, 1], [-1, 1, 1], [1, -1, 1], [-1, -1, 1]]:
+            light_pose[:3, 3] = mesh.vertices.mean(0) + np.array(lp)
+            scene.add(light, pose=light_pose)
+
+        # Material
+        material = pyrender.MetallicRoughnessMaterial(
+            metallicFactor=0.0,
+            alphaMode='OPAQUE',
+            baseColorFactor=(1.0, 1.0, 0.9, 1.0))
+
+        mesh_images = []
+
+        # Resize input image
+        img_height = img_res
+        img_width = int(img_height * img.shape[1] / img.shape[0])
+        img = cv2.resize(img, (img_width, img_height))
+        mesh_images.append(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+
+        # Top views only (X-axis rotations), then rotate 90° clockwise
+        for topview_angle in [90, 270]:
+            out_mesh = mesh.copy()
+
+            # Rotate around X-axis
+            rot = trimesh.transformations.rotation_matrix(
+                np.radians(topview_angle), [1, 0, 0])
+            out_mesh.apply_transform(rot)
+
+            # Move mesh to the right (positive X-axis) and assign label
+            if topview_angle == 90:
+                right_shift = np.array([-0.02, 0.03, 0.0])  # Dorsal view
+                label = "Dorsal"
+            elif topview_angle == 270:
+                right_shift = np.array([-0.02, -0.025, 0.0])  # Palmar view
+                label = "Palmar"
+            out_mesh.apply_translation(right_shift)
+
+            # Create pyrender mesh and add to scene
+            mesh_node = pyrender.Mesh.from_trimesh(out_mesh, material=material)
+            mesh_pose = np.eye(4)
+            scene.add(mesh_node, pose=mesh_pose, name='mesh')
+
+            # Render the scene
+            output_img = self.render_image(scene, img_res)
+            output_img = (output_img * 255).astype(np.uint8)
+            output_img = cv2.cvtColor(output_img, cv2.COLOR_RGBA2RGB)
+
+            # Rotate 90 degrees clockwise
+            output_img = cv2.rotate(output_img, cv2.ROTATE_90_CLOCKWISE)
+
+            # Write label directly on the image (bottom center)
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            font_scale = 1.0
+            thickness = 2
+            text_size = cv2.getTextSize(label, font, font_scale, thickness)[0]
+            if topview_angle == 90:
+                text_x_move = 44
+            elif topview_angle == 270:
+                text_x_move = -34
+            text_x = (output_img.shape[1] - text_size[0]) // 2 + text_x_move
+            text_y = output_img.shape[0] - 25  # 10px above bottom
+            cv2.putText(output_img, label, (text_x, text_y), font, font_scale, (0, 0, 0), thickness, cv2.LINE_AA)
+
+            mesh_images.append(output_img)
+
+            # Remove the mesh node
+            scene.remove_node(scene.get_nodes(name='mesh').pop())
+
+        # Stack images horizontally
+        IMG = np.hstack(mesh_images)
+        return IMG
+
+    def render_contact(self, img, contact, mode='test'):   
         vis_contact = contact == 1.
 
         for vert in range(self.hand_model_mano.visual.vertex_colors.shape[0]):
@@ -133,7 +219,10 @@ class ContactRenderer():
 
         img = cv2.resize(img.copy(), cfg.MODEL.input_img_shape, cv2.INTER_CUBIC)
 
-        rend = self.create_scene(self.hand_model_mano, img[..., ::-1].astype(np.uint8))
+        if mode == 'demo':
+            rend = self.create_scene_demo(self.hand_model_mano, img[..., ::-1].astype(np.uint8))
+        else:
+            rend = self.create_scene(self.hand_model_mano, img[..., ::-1].astype(np.uint8))
         return rend
 
 

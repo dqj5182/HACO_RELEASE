@@ -9,17 +9,19 @@ import mediapipe as mp
 from mediapipe.tasks.python import vision
 from mediapipe.tasks.python import BaseOptions
 
-from lib.core.config import cfg, update_config, logger
+from lib.core.config import cfg, update_config
 from lib.models.model import HACO
+from lib.utils.human_models import mano
 from lib.utils.contact_utils import get_contact_thres
 from lib.utils.vis_utils import ContactRenderer, draw_landmarks_on_image
 from lib.utils.preprocessing import augmentation_contact
+from lib.utils.demo_utils import remove_small_contact_components
 
 
-parser = argparse.ArgumentParser(description='Test HACO')
+parser = argparse.ArgumentParser(description='Demo HACO')
 parser.add_argument('--backbone', type=str, default='hamer', choices=['hamer', 'vit-l-16', 'vit-b-16', 'vit-s-16', 'handoccnet', 'hrnet-w48', 'hrnet-w32', 'resnet-152', 'resnet-101', 'resnet-50', 'resnet-34', 'resnet-18'], help='backbone model')
-parser.add_argument('--checkpoint', type=str, default='', help='model path for evaluation')
-parser.add_argument('--input_path', type=str, default='asset/example_images', help='model path for evaluation')
+parser.add_argument('--checkpoint', type=str, default='', help='model path for demo')
+parser.add_argument('--input_path', type=str, default='asset/example_images', help='image path for demo')
 args = parser.parse_args()
 
 
@@ -28,7 +30,7 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 
 # Initialize directories
-experiment_dir = 'experiments_demo'
+experiment_dir = 'experiments_demo_image'
 
 
 # Load config
@@ -114,6 +116,7 @@ for i, frame_name in tqdm(enumerate(images), total=len(images)):
 
     eval_thres = get_contact_thres(args.backbone)
     contact_mask = (outputs['contact_out'][0] > eval_thres).detach().cpu().numpy()
+    contact_mask = remove_small_contact_components(contact_mask, faces=mano.watertight_face['right'], min_size=20)
     contact_rendered = contact_renderer.render_contact(crop_img[..., ::-1], contact_mask)
     cv2.imwrite(f'outputs/contact/{frame_name_base}.png', contact_rendered)
 ############################### Demo Loop ###############################
