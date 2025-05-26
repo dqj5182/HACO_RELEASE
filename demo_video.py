@@ -115,7 +115,7 @@ for i, video_name in tqdm(enumerate(video_files), total=len(video_files)):
 
         # Save result
         eval_thres = get_contact_thres(args.backbone)
-        raw_contact = (outputs['contact_out'][0] > eval_thres).detach().cpu().numpy()
+        raw_contact = (outputs['contact_out'].sigmoid()[0] > eval_thres).detach().cpu().numpy()
         smoothed_contact = smooth_contact_mask(smoothed_contact, raw_contact, alpha=0.8)
         contact_mask = smoothed_contact > 0.5
         contact_mask = remove_small_contact_components(contact_mask, faces=mano.watertight_face['right'], min_size=20)

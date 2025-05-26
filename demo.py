@@ -115,7 +115,7 @@ for i, frame_name in tqdm(enumerate(images), total=len(images)):
     cv2.imwrite(f'outputs/crop_img/{frame_name_base}.png', crop_img[..., ::-1])
 
     eval_thres = get_contact_thres(args.backbone)
-    contact_mask = (outputs['contact_out'][0] > eval_thres).detach().cpu().numpy()
+    contact_mask = (outputs['contact_out'].sigmoid()[0] > eval_thres).detach().cpu().numpy()
     contact_mask = remove_small_contact_components(contact_mask, faces=mano.watertight_face['right'], min_size=20)
     contact_rendered = contact_renderer.render_contact(crop_img[..., ::-1], contact_mask)
     cv2.imwrite(f'outputs/contact/{frame_name_base}.png', contact_rendered)
