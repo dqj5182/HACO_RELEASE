@@ -227,6 +227,143 @@ class ContactRenderer():
 
 
 
+class ContactHeatmapRenderer():
+    def __init__(self):
+        self.default_mesh_color = [130, 130, 130, 255]
+        self.contact_mesh_color = [0, 255, 0, 255]
+
+        with torch.no_grad():
+            hand_pose = change_flat_hand_mean(np.zeros((48)), remove=True)
+            mano_rest_out = mano.layer['right'](
+                betas=torch.zeros((1, 10)),
+                hand_pose=torch.from_numpy(hand_pose[None, 3:]).float(),
+                global_orient=torch.zeros((1, 3)),
+                transl=torch.zeros((1, 3))
+            )
+            self.hand_model_mano = trimesh.Trimesh(mano_rest_out.vertices[0], mano.watertight_face['right'])
+
+    def normalize_contact(self, contact):
+        """ Normalize contact values to be between 0 and 1 """
+        contact_min = contact.min()
+        contact_max = contact.max()
+        if contact_max - contact_min > 0:
+            return (contact - contact_min) / (contact_max - contact_min)
+        return contact  # Already normalized
+
+    def contact_to_color(self, contact_value):
+        cmap = cm.get_cmap('jet')
+        return cmap(1.0 - contact_value)[:3]  # Reverse the color mapping
+
+    def render_image(self, scene, img_res, img=None, viewer=False):
+        r = pyrender.OffscreenRenderer(viewport_width=img_res, viewport_height=img_res, point_size=1.0)
+        color, _ = r.render(scene, flags=pyrender.RenderFlags.RGBA)
+        color = color.astype(np.float32) / 255.0
+
+        # Enforce full opacity for non-background pixels
+        color[color[:, :, 3] > 0, 3] = 1.0  
+
+        if img is not None:
+            valid_mask = (color[:, :, -1] > 0)[:, :, np.newaxis]
+            input_img = img.detach().cpu().numpy()
+            output_img = (color[:, :, :-1] * valid_mask + (1 - valid_mask) * input_img)
+        else:
+            output_img = color
+        return output_img
+
+    def create_scene(self, mesh, focal_length=5000, camera_center=250, img_res=500):
+        # Setup the scene
+        scene = pyrender.Scene(bg_color=[0.0, 0.0, 0.0, 0.0], ambient_light=(0.3, 0.3, 0.3))
+
+        # add mesh for camera
+        camera_pose = np.eye(4)
+        camera_rotation = np.eye(3, 3)
+        camera_translation = np.array([0., 0, 2.5])
+        camera_pose[:3, :3] = camera_rotation
+        camera_pose[:3, 3] = camera_rotation @ camera_translation
+
+        pyrencamera = pyrender.camera.IntrinsicsCamera(
+            fx=focal_length, fy=focal_length,
+            cx=camera_center, cy=camera_center)
+        scene.add(pyrencamera, pose=camera_pose)
+
+        # create and add light
+        light = pyrender.PointLight(color=[1.0, 1.0, 1.0], intensity=1)
+        light_pose = np.eye(4)
+        for lp in [[1, 1, 1], [-1, 1, 1], [1, -1, 1], [-1, -1, 1]]:
+            light_pose[:3, 3] = mesh.vertices.mean(0) + np.array(lp)
+            scene.add(light, pose=light_pose)
+
+        # Mesh material (now with alpha blending)
+        material = pyrender.MetallicRoughnessMaterial(
+            metallicFactor=0.0,
+            alphaMode='MASK',  # Enable transparency
+            baseColorFactor=(1.0, 1.0, 0.9, 1.0)  # Full opacity for the mesh
+        )
+
+        mesh_images = []
+
+        for sideview_angle in [0, 90, 180, 270]:
+            out_mesh = mesh.copy()
+            rot = trimesh.transformations.rotation_matrix(
+                np.radians(sideview_angle), [0, 1, 0])
+            out_mesh.apply_transform(rot)
+            out_mesh = pyrender.Mesh.from_trimesh(
+                out_mesh,
+                material=material)
+            mesh_pose = np.eye(4)
+            scene.add(out_mesh, pose=mesh_pose, name='mesh')
+
+            output_img = self.render_image(scene, img_res)
+            output_img = (output_img * 255).astype(np.uint8)
+            mesh_images.append(output_img)
+
+            # delete the previous mesh
+            prev_mesh = scene.get_nodes(name='mesh').pop()
+            scene.remove_node(prev_mesh)
+
+        # show upside down view
+        for topview_angle in [90, 270]:
+            out_mesh = mesh.copy()
+            rot = trimesh.transformations.rotation_matrix(
+                np.radians(topview_angle), [1, 0, 0])
+            out_mesh.apply_transform(rot)
+            out_mesh = pyrender.Mesh.from_trimesh(
+                out_mesh,
+                material=material)
+            mesh_pose = np.eye(4)
+            scene.add(out_mesh, pose=mesh_pose, name='mesh')
+
+            output_img = self.render_image(scene, img_res)
+            output_img = (output_img * 255).astype(np.uint8)
+            mesh_images.append(output_img)
+
+            # delete the previous mesh
+            prev_mesh = scene.get_nodes(name='mesh').pop()
+            scene.remove_node(prev_mesh)
+
+        # stack images
+        IMG = np.hstack(mesh_images)
+        return IMG, mesh_images
+
+
+    def render_contact(self, contact):
+        contact = self.normalize_contact(contact)
+
+        # Assign heatmap colors to vertices based on contact values
+        for vert in range(self.hand_model_mano.visual.vertex_colors.shape[0]):
+            color = self.contact_to_color(contact[vert])
+            self.hand_model_mano.visual.vertex_colors[vert] = [
+                int(color[0] * 255),
+                int(color[1] * 255),
+                int(color[2] * 255),
+                255
+            ]
+
+        rend = self.create_scene(self.hand_model_mano)
+        return rend
+
+
+
 # This function is for demo code with mediapipe
 MARGIN = 10  # pixels
 FONT_SIZE = 1

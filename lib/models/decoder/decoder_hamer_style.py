@@ -604,10 +604,7 @@ class ContactTransformerDecoderHead(nn.Module):
             **transformer_args
         )
         self.deccontact = nn.Linear(1024, 778)
-
-        CONTACT_MEAN_DIR = cfg.MODEL.contact_means_path # TODO: REPLACE THIS WITH CONTACT MEAN OF ENTIRE DATASETS
-        init_contact = nn.Parameter(torch.randn(1, 778, requires_grad=True))
-        self.register_buffer('init_contact', init_contact)
+        self.init_contact = nn.Parameter(torch.randn(1, 778, requires_grad=True))
 
     def forward(self, x, **kwargs): # x: [b, 1280, 16, 12] (if resnet-50, x: [b, 2048, 8, 8], resnet-34: [b, 512, 8, 8], hrnet-w32: [b, 2048, 8, 8])
         batch_size = x.shape[0]

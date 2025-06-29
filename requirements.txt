@@ -3,6 +3,7 @@ tqdm
 pytz
 opencv-python
 trimesh
+rtree
 point-cloud-utils
 chumpy
 pyyaml
@@ -13,3 +14,5 @@ smplx
 gdown
 mediapipe
 pyrender==0.1.33
+huggingface_hub
+pycocotools

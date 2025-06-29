@@ -151,6 +151,6 @@ class MOW(Dataset):
 
         input_data = dict(image=img)
         targets_data = dict(contact_data=contact_data)
-        meta_info = dict(sample_id=sample_id, orig_img=orig_img, mano_valid=mano_valid)
+        meta_info = dict(sample_id=sample_id, mano_valid=mano_valid)
 
         return dict(input_data=input_data, targets_data=targets_data, meta_info=meta_info)

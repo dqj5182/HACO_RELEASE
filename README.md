@@ -17,6 +17,11 @@
 <a href="https://arxiv.org/pdf/2505.11152"><img src='https://img.shields.io/badge/Paper-HACO-blue' alt='Paper PDF'></a>
 <a href="https://arxiv.org/abs/2505.11152"><img src='https://img.shields.io/badge/arXiv-HACO-red' alt='Paper PDF'></a>
 
+<a href="https://huggingface.co/datasets/dqj5182/haco-checkpoints"><img src="https://img.shields.io/badge/%F0%9F%A4%97%20Model_Card-Huggingface-orange"></a> <a href="https://huggingface.co/spaces/dqj5182/HACO"><img src="https://img.shields.io/badge/%F0%9F%A4%97%20Gradio%20Demo-Huggingface-orange"></a> <a href="https://huggingface.co/papers/2505.11152"><img src="https://img.shields.io/badge/%F0%9F%A4%97%20Paper-Huggingface-orange"></a>
+
+[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/2505-11152/dense-contact-estimation-on-mow)](https://paperswithcode.com/sota/dense-contact-estimation-on-mow?p=2505-11152)
+
+
 
 <h2>ArXiv 2025</h2>
 
@@ -42,8 +47,18 @@ conda install pytorch==1.11.0 torchvision==0.12.0 torchaudio==0.11.0 cudatoolkit
 # Install all remaining packages
 pip install -r requirements.txt
 ```
-* Download our checkpoints from [OneDrive](https://1drv.ms/u/c/bf7e2a9a100f1dba/Ef18aU5ItbFDgW1sSv3P0l0BGTzN6PlsCnm0q5ecpTWIfQ?e=Y40qsN).
 
+
+## Data
+You need to follow our directory structure of the `data`.
+* For quick demo: See [`docs/data_demo.md`](docs/data_demo.md).
+* For evaluation: See [`docs/data_eval.md`](docs/data_eval.md).
+* For training: See [`docs/data_train.md`](docs/data_train.md).
+
+Then, download the official checkpoints and place them in the `release_checkpoint` from [HuggingFace](https://huggingface.co/datasets/dqj5182/haco-checkpoints/tree/main) by running (if not working, try [OneDrive](https://1drv.ms/u/c/bf7e2a9a100f1dba/Ef18aU5ItbFDgW1sSv3P0l0BGTzN6PlsCnm0q5ecpTWIfQ?e=Y40qsN)):
+```
+bash scripts/download_haco_checkpoints.sh
+```
 
 
 ## Quick demo (Image)
@@ -64,7 +79,10 @@ python demo.py --backbone vit-b-16 --checkpoint release_checkpoint/haco_final_vi
 > Note: The demo includes post-processing to reduce noise in small or sparse contact areas.
 
 ## Quick demo (Video)
-Before the demo, please download example videos from [OneDrive](https://1drv.ms/u/c/bf7e2a9a100f1dba/ERsk_D-EubxBi1Usu2bW2hABwy9nxzRxAHutXDxmv85TLw?e=rIjOI7) and save at `asset/example_videos`.<br>
+Before the video demo, please download example videos from [HuggingFace](https://huggingface.co/datasets/dqj5182/haco-data/blob/main/demo/asset/example_videos.zip) and save at `asset/example_videos` by running (if not working, try [OneDrive](https://1drv.ms/u/c/bf7e2a9a100f1dba/ERsk_D-EubxBi1Usu2bW2hABwy9nxzRxAHutXDxmv85TLw?e=rIjOI7)):
+```
+bash scripts/download_demo_example_videos.sh
+```
 
 To run HACO on demo videos using the [Mediapipe](https://ai.google.dev/edge/mediapipe/solutions/guide) hand detector, please run:
 ```
@@ -83,52 +101,23 @@ python demo_video.py --backbone vit-b-16 --checkpoint release_checkpoint/haco_fi
 > Note: The demo includes post-processing for both spatial smoothing of small contact areas and temporal smoothing across frames to ensure stable contact predictions and hand detections.
 
 
-## Data
-You need to follow directory structure of the `data` and `release_checkpoint` as below.
-```
-${ROOT} 
-|-- data  
-|   |-- base_data
-|   |   |-- demo_data
-|   |   |   |-- hand_landmarker.task
-|   |   |-- human_models
-|   |   |   |-- mano
-|   |   |   |   |-- MANO_LEFT.pkl
-|   |   |   |   |-- MANO_RIGHT.pkl
-|   |   |   |   |-- V_regressor_84.npy
-|   |   |   |   |-- V_regressor_336.npy
-|   |   |-- pretrained_models
-|   |   |   |-- hamer
-|   |   |   |-- handoccnet
-|   |   |   |-- hrnet
-|   |   |   |-- pose2pose
-|   |-- MOW
-|   |   |-- data
-|   |   |   |-- images
-|   |   |   |-- masks
-|   |   |   |-- models
-|   |   |   |-- poses.json
-|   |   |   |-- watertight_models
-|   |   |-- preprocessed_data
-|   |   |   |-- test
-|   |   |   |   |-- contact_data
-|   |   |-- splits
-|   |   |-- dataset.py
-|-- release_checkpoint
-```
-* Download base_data from [OneDrive](https://1drv.ms/u/c/bf7e2a9a100f1dba/EUmlgxCPqwpEvIhma80VZsoBnHrIPXzbsmJzoQpP-saj-A?e=fSxPEi).
-* Download [MOW](https://zhec.github.io/rhoi/) data from GitHub ([images](https://github.com/ZheC/MOW), [models](https://github.com/ZheC/MOW), [poses.json](https://github.com/ZheC/MOW)) and OneDrive ([masks](https://1drv.ms/u/c/bf7e2a9a100f1dba/Ef2YhwccS4tPt1WrAAP4-iMBjcaSUgawDMnf_HDpqoTeNw?e=eQYJ4e), [watertight_models](https://1drv.ms/u/c/bf7e2a9a100f1dba/EW5YXeXtk3NBnX9PcvJtGIABj_9c1FW2RdrcppDgRzqHhg?e=ryUqCf), [preprocessed_data](https://1drv.ms/u/c/bf7e2a9a100f1dba/ESkqLhHk9gFHo4HH2uA9akABgYuS2wLgWfr4YJMRmagezQ?e=DoGFso), [splits](https://1drv.ms/u/c/bf7e2a9a100f1dba/EW60jCPiuNNOjkmCUdqlBbEBact_Ums22dwBoQoFMkUV6w?e=2lxpJd)). For GitHub data, you can directly download them by running:
-```
-bash scripts/download_official_mow.sh
-```
-* Download initial checkpoints by running:
-```
-bash scripts/download_initial_checkpoints.sh
-```
+
 
 ## Running HACO
-### Train 
-TBA by the June, 2025.
+### Train
+To train HACO, please run:
+```
+python train.py --backbone {BACKBONE_TYPE}
+```
+
+For example,
+```
+# ViT-H (Default, HaMeR initialized) backbone
+python train.py --backbone hamer
+
+# ViT-B (ImageNet initialized) backbone
+python train.py --backbone vit-b-16
+```
 
 ### Test
 To evaluate HACO on [MOW](https://github.com/ZheC/MOW) dataset, please run:
@@ -178,8 +167,8 @@ python test.py --backbone resnet-18 --checkpoint release_checkpoint/haco_final_r
 
 
 ## Technical Q&A
-* ImportError: cannot import name 'bool' from 'numpy': Please just comment out the line "from numpy import bool, int, float, complex, object, unicode, str, nan, inf".
-* `np.int` was a deprecated alias for the builtin `int`. To avoid this error in existing code, use `int` by itself. Doing this will not modify any behavior and is safe. When replacing `np.int`, you may wish to use e.g. `np.int64` or `np.int32` to specify the precision. If you wish to review your current use, check the release note link for additional information: Please refer to [here](https://github.com/scikit-optimize/scikit-optimize/issues/1171)
+* `ImportError: cannot import name 'bool' from 'numpy'`: Please just comment out the line `from numpy import bool, int, float, complex, object, unicode, str, nan, inf`.
+* `np.int was a deprecated alias for the builtin int. To avoid this error in existing code, use int by itself. Doing this will not modify any behavior and is safe. When replacing np.int, you may wish to use e.g. np.int64 or np.int32 to specify the precision. If you wish to review your current use, check the release note link for additional information`: Please refer to [here](https://github.com/scikit-optimize/scikit-optimize/issues/1171).
 
 
 ## Acknowledgement

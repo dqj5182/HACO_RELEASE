@@ -50,6 +50,36 @@ def process_bbox(bbox, target_shape, original_img_shape):
     return bbox
 
 
+def pca_to_axis_angle(pca_pose):
+    """
+    Converts the PCA pose representation from ManoLayer (use_pca=True)
+    to full axis-angle pose (use_pca=False).
+    
+    Args:
+    - pca_pose: The PCA components (batch_size x num_pca_comps).
+    
+    Returns:
+    - full_pose: The full 48D axis-angle pose (batch_size x 48).
+    """
+    # Ensure pca_pose is a torch tensor
+    if isinstance(pca_pose, np.ndarray):
+        pca_pose = torch.tensor(pca_pose, dtype=torch.float32)
+
+    global_rotation, hand_pose = pca_pose[:, :3], pca_pose[:, 3:]  # This should be a placeholder, adjust as needed.
+    
+    # Multiply the PCA components by the PCA basis to get the hand pose (45D)
+    mano_th_selected_comps = get_mano_pca_basis(ncomps=45, use_pca=True, side='right', mano_root='data/base_data/human_models/mano')
+    hand_pose = torch.mm(hand_pose, mano_th_selected_comps)
+    
+    # Add the mean hand pose to the result (broadcasting over the batch dimension)
+    full_hand_pose = hand_pose
+    
+    # Concatenate the global rotation with the full hand pose
+    full_pose = torch.cat([global_rotation, full_hand_pose], dim=1)  # Shape: (batch_size, 48)
+    
+    return full_pose
+
+
 import re
 def atoi(text):
     return int(text) if text.isdigit() else text

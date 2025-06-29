@@ -11,7 +11,7 @@ import torchvision.transforms as transforms
 from lib.core.config import cfg, update_config
 from lib.models.model import HACO
 from lib.utils.contact_utils import get_contact_thres
-from lib.utils.train_utils import worker_init_fn, set_seed
+from lib.utils.train_utils import get_transform, worker_init_fn
 from lib.utils.eval_utils import evaluation
 
 
@@ -42,23 +42,19 @@ os.makedirs(checkpoint_dir, exist_ok=True)
 update_config(backbone_type=args.backbone, exp_dir=experiment_dir)
 
 
-# Set seed for reproducibility
-from lib.core.config import logger
-set_seed(cfg.MODEL.seed)
-logger.info(f"Using random seed: {cfg.MODEL.seed}")
-
-
 ############## Dataset ###############
-transform = transforms.ToTensor()
+transform = get_transform(args.backbone)
+
 test_dataset = eval(f'{cfg.DATASET.test_name}')(transform, 'test')
 ############## Dataset ###############
 
 
 ############# Dataloader #############
-test_dataloader = DataLoader(test_dataset, batch_size=cfg.TEST.batch, shuffle=False, num_workers=cfg.DATASET.workers, pin_memory=True, drop_last=False, worker_init_fn=worker_init_fn) # Same as val dataset for trainer.fit
+test_dataloader = DataLoader(test_dataset, batch_size=cfg.TEST.batch, shuffle=False, num_workers=cfg.DATASET.workers, pin_memory=True, drop_last=False, worker_init_fn=worker_init_fn)
 ############# Dataloader #############
 
 
+from lib.core.config import logger
 logger.info(f"# of test samples: {len(test_dataset)}")
 
 

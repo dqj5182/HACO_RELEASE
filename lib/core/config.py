@@ -15,7 +15,6 @@ cfg.DATASET = edict()
 cfg.DATASET.train_name = ['ObMan', 'DexYCB', 'HO3D', 'MOW', 'H2O3D', 'HOI4D', 'H2O', 'ARCTIC', 'InterHand26M', 'HIC', 'PROX', 'RICH', 'Decaf', 'Hi4D']
 cfg.DATASET.test_name = 'MOW' # ONLY TEST ONE DATASET AT A TIME
 cfg.DATASET.workers = 2
-cfg.DATASET.random_seed = 314
 cfg.DATASET.ho_bbox_expand_ratio = 1.3
 cfg.DATASET.hand_bbox_expand_ratio = 1.3
 cfg.DATASET.ho_big_bbox_expand_ratio = 2.0
@@ -25,16 +24,19 @@ cfg.DATASET.obj_bbox_expand_ratio = 1.5
 
 """ Model - HMR """
 cfg.MODEL = edict()
-cfg.MODEL.seed = 314
 cfg.MODEL.input_img_shape = (256, 256)
 cfg.MODEL.img_mean = (0.485, 0.456, 0.406)
 cfg.MODEL.img_std = (0.229, 0.224, 0.225)
 # MANO
 cfg.MODEL.human_model_path = 'data/base_data/human_models'
 # Contact
-cfg.MODEL.contact_means_path = 'data/base_data/contact_data/dexycb/contact_means_dexycb.npy'
+cfg.MODEL.c_thres_ih = 0.005 # Reasonable for InterHand26M, HIC dataset
+cfg.MODEL.c_thres = 0.01 # Reasonable for ObMan, DexYCB, HO3D, H2O3D, ARCTIC, HOI4D, H2O, PROX dataset
+cfg.MODEL.c_thres_in_the_wild = 0.035 # Reasonable for MOW dataset
+cfg.MODEL.contact_data_path = 'data/base_data/contact_data/all/contact_data_all.npy'
+cfg.MODEL.contact_means_path = 'data/base_data/contact_data/all/contact_means_all.npy'
 # Backbone
-cfg.MODEL.backbone_type = ''
+cfg.MODEL.backbone_type = 'hamer'
 cfg.MODEL.hamer_backbone_pretrained_path = 'data/base_data/pretrained_models/hamer/hamer.ckpt'
 cfg.MODEL.hrnet_w32_backbone_config_path = 'data/base_data/pretrained_models/hrnet/cls_hrnet_w32_sgd_lr5e-2_wd1e-4_bs32_x100.yaml'
 cfg.MODEL.hrnet_w32_backbone_pretrained_path = 'data/base_data/pretrained_models/hrnet/hrnet_w32-36af842e.pth'
@@ -46,6 +48,10 @@ cfg.MODEL.V_regressor_336_path = 'data/base_data/human_models/mano/V_regressor_3
 cfg.MODEL.V_regressor_84_path = 'data/base_data/human_models/mano/V_regressor_84.npy'
 # Hand Detector
 cfg.MODEL.hand_landmarker_path = 'data/base_data/demo_data/hand_landmarker.task'
+# Balanced Sampling
+cfg.MODEL.balanced_sampling = True
+# Loss
+cfg.MODEL.loss_type = 'vcb+reg+smooth'
 
 
 """ Train Detail """
@@ -71,8 +77,8 @@ cfg.TEST.batch = 1
 """ CAMERA """
 cfg.CAMERA = edict()
 
-np.random.seed(cfg.DATASET.random_seed)
-torch.manual_seed(cfg.DATASET.random_seed)
+
+""" OTHERS """
 torch.backends.cudnn.benchmark = True
 logger = None
 

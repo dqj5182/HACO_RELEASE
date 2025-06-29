@@ -14,7 +14,7 @@ def evaluation(outputs, targets_data, meta_info, mode='val', thres=0.5):
     # Error Calculate
     if mesh_valid:
         # Contact Metrics
-        cont_pre, cont_rec, cont_f1 = compute_contact_metrics(targets_data['contact_data']['contact_h'][0].detach().cpu().numpy(), outputs['contact_out'][0].detach().cpu().numpy(), mesh_valid, thres=thres)
+        cont_pre, cont_rec, cont_f1 = compute_contact_metrics(targets_data['contact_data']['contact_h'][0].detach().cpu().numpy(), contact_pred, mesh_valid, thres=thres)
         eval_out['cont_pre'] = cont_pre
         eval_out['cont_rec'] = cont_rec
         eval_out['cont_f1'] = cont_f1
