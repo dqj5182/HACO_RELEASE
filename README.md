@@ -4,9 +4,7 @@
 
 <b>[Daniel Sungho Jung](https://dqj5182.github.io/)</b>, <b>[Kyoung Mu Lee](https://cv.snu.ac.kr/index.php/~kmlee/)</b> 
 
-<p align="center">
-    <img src="asset/logo_cvlab.png" height=55>
-</p>
+<img src="asset/logo_cvlab.png" width="30%">
 
 <b>Seoul National University</b>
 
