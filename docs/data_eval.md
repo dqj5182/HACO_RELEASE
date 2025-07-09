@@ -30,7 +30,10 @@ ${ROOT}
 |   |   |-- splits
 |   |   |-- dataset.py
 ```
-* Download `base_data` from [OneDrive](https://1drv.ms/u/c/bf7e2a9a100f1dba/EUmlgxCPqwpEvIhma80VZsoBnHrIPXzbsmJzoQpP-saj-A?e=fSxPEi).
+* Download `base_data` from [HuggingFace](https://huggingface.co/datasets/dqj5182/haco-data/resolve/main/train/data/base_data.tar.gz) by running (if not working, try [OneDrive](https://1drv.ms/u/c/bf7e2a9a100f1dba/Ea4_PNhv7ZJAkZDCbbn56ywBFLUqE_eivVxercSw3dZO1w?e=N9NSQj)):
+```
+bash scripts/download_train_base_data.sh
+```
 * Download [MOW](https://zhec.github.io/rhoi/) data from official GitHub ([images](https://github.com/ZheC/MOW), [models](https://github.com/ZheC/MOW), [poses.json](https://github.com/ZheC/MOW)) and OneDrive ([masks](https://1drv.ms/u/c/bf7e2a9a100f1dba/Ef2YhwccS4tPt1WrAAP4-iMBjcaSUgawDMnf_HDpqoTeNw?e=eQYJ4e), [watertight_models](https://1drv.ms/u/c/bf7e2a9a100f1dba/EW5YXeXtk3NBnX9PcvJtGIABj_9c1FW2RdrcppDgRzqHhg?e=ryUqCf), [preprocessed_data](https://1drv.ms/u/c/bf7e2a9a100f1dba/ESkqLhHk9gFHo4HH2uA9akABgYuS2wLgWfr4YJMRmagezQ?e=DoGFso), [splits](https://1drv.ms/u/c/bf7e2a9a100f1dba/EW60jCPiuNNOjkmCUdqlBbEBact_Ums22dwBoQoFMkUV6w?e=2lxpJd)). For GitHub data, you can directly download them by running:
 ```
 bash scripts/download_official_mow.sh

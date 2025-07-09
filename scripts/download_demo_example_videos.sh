@@ -12,4 +12,7 @@ wget -c "$FILE_URL" -O "$ARCHIVE_NAME"
 echo "Unzipping into $TARGET_DIR..."
 unzip -o "$ARCHIVE_NAME" -d "$TARGET_DIR"
 
+# Remove zip after extraction
+rm "$ARCHIVE_NAME"
+
 echo "Done. Extracted to $TARGET_DIR"

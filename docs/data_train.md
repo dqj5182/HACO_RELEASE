@@ -71,7 +71,11 @@ ${ROOT}
 |   |   |-- dataset.py
 ```
 #### base_data
-* Download `base_data` from OneDrive.
+* Download `base_data` from [HuggingFace](https://huggingface.co/datasets/dqj5182/haco-data/resolve/main/train/data/base_data.tar.gz) by running (if not working, try [OneDrive](https://1drv.ms/u/c/bf7e2a9a100f1dba/Ea4_PNhv7ZJAkZDCbbn56ywBFLUqE_eivVxercSw3dZO1w?e=N9NSQj)):
+```
+bash scripts/download_train_base_data.sh
+```
+
 #### preprocessed_data
 * Download `preprocessed_data` from [HuggingFace](https://huggingface.co/datasets/dqj5182/haco-data) by running:
 ```
@@ -367,7 +371,7 @@ ${ROOT}
 ```
 bash scripts/download_gsdf_obman.sh
 ```
-* Donwload `object_models` from OneDrive.
+* Donwload `object_models` from [OneDrive](https://1drv.ms/u/c/bf7e2a9a100f1dba/EfOzLZbNp0VHvic5LyR4xMEBDrvq0c9jwoexfIlRx-NAsA?e=qgdWNx).
 #### PROX dataset
 ```
 ${ROOT} 

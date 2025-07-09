@@ -5,7 +5,7 @@ from collections import defaultdict, deque
 import mediapipe as mp
 
 
-from lib.utils.vis_utils import draw_landmarks_on_image
+from lib.utils.vis_utils import draw_landmarks_on_image, draw_landmarks_on_image_simple
 
 
 def smooth_bbox(prev_bbox, curr_bbox, alpha=0.8):
@@ -64,7 +64,30 @@ def initialize_video_writer(output_path, fps, frame_size):
     raise RuntimeError(f"Failed to initialize VideoWriter for {output_path}")
 
 
-def extract_frames_with_hand(cap, detector):
+def run_wilor_hand_detector(orig_img, detector):
+    conf = 0.3
+    IoU_threshold = 0.3
+
+    detections = detector(orig_img, conf=conf, verbose=False, iou=IoU_threshold)[0]
+
+    img_h, img_w, _ = orig_img.shape
+
+    right_hand_bbox = [0, 0, img_w, img_h] # [x_min_expand, y_min_expand, bb_width_expand, bb_height_expand]
+    best_conf = 0.
+
+    # Find the most confident right hand
+    for det in detections: 
+        Bbox = det.boxes.data.cpu().detach().squeeze().numpy()
+        Conf = det.boxes.conf.data.cpu().detach()[0].numpy().reshape(-1).astype(np.float16)
+        Side = det.boxes.cls.data.cpu().detach()
+
+        if (Side.item() == 1.) and (Conf.item() > best_conf):
+            right_hand_bbox = [Bbox[0], Bbox[1], Bbox[2]-Bbox[0], Bbox[3]-Bbox[1]]
+    
+    return right_hand_bbox
+
+
+def extract_frames_with_hand(cap, detector, detector_type='wilor'):
     frames_with_hand = []
     frame_idx = 0
 
@@ -74,9 +97,13 @@ def extract_frames_with_hand(cap, detector):
             break
 
         orig_img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=orig_img)
-        detection_result = detector.detect(mp_image)
-        _, right_hand_bbox = draw_landmarks_on_image(orig_img.copy(), detection_result)
+        if detector_type == 'wilor':
+            right_hand_bbox = run_wilor_hand_detector(orig_img, detector)
+            _, right_hand_bbox = draw_landmarks_on_image_simple(orig_img.copy(), right_hand_bbox)
+        elif detector_type == 'mediapipe':
+            mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=orig_img)
+            detection_result = detector.detect(mp_image)
+            _, right_hand_bbox = draw_landmarks_on_image(orig_img.copy(), detection_result)
 
         if right_hand_bbox is not None:
             frames_with_hand.append((frame_idx, frame, right_hand_bbox))

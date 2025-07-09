@@ -15,11 +15,12 @@ from lib.utils.human_models import mano
 from lib.utils.contact_utils import get_contact_thres
 from lib.utils.vis_utils import ContactRenderer, draw_landmarks_on_image
 from lib.utils.preprocessing import augmentation_contact
-from lib.utils.demo_utils import smooth_bbox, smooth_contact_mask, remove_small_contact_components, initialize_video_writer, extract_frames_with_hand, find_longest_continuous_segment
+from lib.utils.demo_utils import smooth_bbox, smooth_contact_mask, remove_small_contact_components, initialize_video_writer, extract_frames_with_hand, find_longest_continuous_segment, run_wilor_hand_detector
 
 
 parser = argparse.ArgumentParser(description='Demo HACO')
 parser.add_argument('--backbone', type=str, default='hamer', choices=['hamer', 'vit-l-16', 'vit-b-16', 'vit-s-16', 'handoccnet', 'hrnet-w48', 'hrnet-w32', 'resnet-152', 'resnet-101', 'resnet-50', 'resnet-34', 'resnet-18'], help='backbone model')
+parser.add_argument('--detector', type=str, default='wilor', choices=['wilor', 'mediapipe'], help='detector model')
 parser.add_argument('--checkpoint', type=str, default='', help='model path for demo')
 parser.add_argument('--input_path', type=str, default='asset/example_videos', help='video path for demo')
 args = parser.parse_args()
@@ -47,9 +48,16 @@ video_files = [f for f in os.listdir(input_dir) if f.lower().endswith(('.mp4', '
 
 
 # Initialize MediaPipe HandLandmarker
-base_options = BaseOptions(model_asset_path=cfg.MODEL.hand_landmarker_path)
-hand_options = vision.HandLandmarkerOptions(base_options=base_options, num_hands=2)
-detector = vision.HandLandmarker.create_from_options(hand_options)
+if args.detector == 'wilor':
+    from ultralytics import YOLO
+    detector_path = f'data/base_data/demo_data/wilor_detector.pt'
+    detector = YOLO(detector_path)
+elif args.detector == 'mediapipe':
+    base_options = BaseOptions(model_asset_path=cfg.MODEL.hand_landmarker_path)
+    hand_options = vision.HandLandmarkerOptions(base_options=base_options, num_hands=2)
+    detector = vision.HandLandmarker.create_from_options(hand_options)
+else:
+    raise NotImplementedError
 
 
 ############# Model #############
@@ -79,7 +87,7 @@ for i, video_name in tqdm(enumerate(video_files), total=len(video_files)):
     fps = 30 if fps == 0 or np.isnan(fps) else fps
 
     # Extract meaningful video segment
-    frames_with_hand = extract_frames_with_hand(cap, detector)
+    frames_with_hand = extract_frames_with_hand(cap, detector, args.detector)
     longest_segment = find_longest_continuous_segment(frames_with_hand)
 
     if not longest_segment:

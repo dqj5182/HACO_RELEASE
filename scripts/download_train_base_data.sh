@@ -1,7 +1,7 @@
 #!/bin/bash
 
 TARGET_DIR="data"
-FILE_URL="https://huggingface.co/datasets/dqj5182/haco-data/resolve/main/demo/data/base_data.tar.gz"
+FILE_URL="https://huggingface.co/datasets/dqj5182/haco-data/resolve/main/train/data/base_data.tar.gz"
 ARCHIVE_NAME="$TARGET_DIR/base_data.tar.gz"
 
 mkdir -p "$TARGET_DIR"

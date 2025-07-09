@@ -60,18 +60,18 @@ bash scripts/download_haco_checkpoints.sh
 
 
 ## Quick demo (Image)
-To run HACO on demo images using the [Mediapipe](https://ai.google.dev/edge/mediapipe/solutions/guide) hand detector, please run:
+To run HACO on demo images using the [WiLoR](https://github.com/rolpotamias/WiLoR) or [Mediapipe](https://ai.google.dev/edge/mediapipe/solutions/guide) hand detector, please run:
 ```
-python demo.py --backbone {BACKBONE_TYPE} --checkpoint {CKPT_PATH} --input_path {INPUT_PATH}
+python demo.py --backbone {BACKBONE_TYPE} --detector {DETECTOR_TYPE} --checkpoint {CKPT_PATH} --input_path {INPUT_PATH}
 ```
 
 For example,
 ```
 # ViT-H (Default, HaMeR initialized) backbone
-python demo.py --backbone hamer --checkpoint release_checkpoint/haco_final_hamer_checkpoint.ckpt --input_path asset/example_images
+python demo.py --backbone hamer --detector wilor --checkpoint release_checkpoint/haco_final_hamer_checkpoint.ckpt --input_path asset/example_images
 
 # ViT-B (ImageNet initialized) backbone
-python demo.py --backbone vit-b-16 --checkpoint release_checkpoint/haco_final_vit_b_checkpoint.ckpt --input_path asset/example_images
+python demo.py --backbone vit-b-16 --detector wilor --checkpoint release_checkpoint/haco_final_vit_b_checkpoint.ckpt --input_path asset/example_images
 ```
 
 > Note: The demo includes post-processing to reduce noise in small or sparse contact areas.
@@ -82,7 +82,7 @@ Before the video demo, please download example videos from [HuggingFace](https:/
 bash scripts/download_demo_example_videos.sh
 ```
 
-To run HACO on demo videos using the [Mediapipe](https://ai.google.dev/edge/mediapipe/solutions/guide) hand detector, please run:
+To run HACO on demo videos using the [WiLoR](https://github.com/rolpotamias/WiLoR) or [Mediapipe](https://ai.google.dev/edge/mediapipe/solutions/guide) hand detector, please run:
 ```
 python demo_video.py --backbone {BACKBONE_TYPE} --checkpoint {CKPT_PATH} --input_path {INPUT_PATH}
 ```

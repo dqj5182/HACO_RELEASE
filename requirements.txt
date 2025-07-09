@@ -16,3 +16,4 @@ mediapipe
 pyrender==0.1.33
 huggingface_hub
 pycocotools
+ultralytics

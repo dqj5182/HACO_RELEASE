@@ -426,3 +426,27 @@ def draw_landmarks_on_image(rgb_image, detection_result):
                     cv2.FONT_HERSHEY_DUPLEX, FONT_SIZE, HANDEDNESS_TEXT_COLOR, FONT_THICKNESS, cv2.LINE_AA)
 
     return annotated_image, right_hand_bbox
+
+
+def draw_landmarks_on_image_simple(rgb_image, right_hand_bbox):
+    # Draw bbox and label
+    annotated_image = rgb_image.copy()
+    annotated_image = np.ascontiguousarray(annotated_image)
+
+    # Expand bbox
+    x_min, x_max = int(right_hand_bbox[0]), int(right_hand_bbox[0]+right_hand_bbox[2])
+    y_min, y_max = int(right_hand_bbox[1]), int(right_hand_bbox[1]+right_hand_bbox[3])
+    bb_c_x, bb_c_y = (x_min+x_max)/2, (y_min+y_max)/2
+    bb_width, bb_height = x_max-x_min, y_max-y_min
+
+    expand_ratio = cfg.DATASET.ho_big_bbox_expand_ratio
+
+    bb_width_expand, bb_height_expand = expand_ratio * bb_width, expand_ratio * bb_height
+    x_min_expand, y_min_expand = bb_c_x - 0.5 * bb_width_expand, bb_c_y - 0.5 * bb_height_expand
+    
+    right_hand_bbox = [x_min_expand, y_min_expand, bb_width_expand, bb_height_expand]
+
+    cv2.rectangle(annotated_image, (x_min, y_min), (x_max, y_max), (0, 255, 0), 2)
+    cv2.putText(annotated_image, "Right Hand", (x_min, y_min - MARGIN), cv2.FONT_HERSHEY_DUPLEX, FONT_SIZE, HANDEDNESS_TEXT_COLOR, FONT_THICKNESS, cv2.LINE_AA)
+
+    return annotated_image, right_hand_bbox

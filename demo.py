@@ -13,13 +13,14 @@ from lib.core.config import cfg, update_config
 from lib.models.model import HACO
 from lib.utils.human_models import mano
 from lib.utils.contact_utils import get_contact_thres
-from lib.utils.vis_utils import ContactRenderer, draw_landmarks_on_image
+from lib.utils.vis_utils import ContactRenderer, draw_landmarks_on_image, draw_landmarks_on_image_simple
 from lib.utils.preprocessing import augmentation_contact
-from lib.utils.demo_utils import remove_small_contact_components
+from lib.utils.demo_utils import remove_small_contact_components, run_wilor_hand_detector
 
 
 parser = argparse.ArgumentParser(description='Demo HACO')
 parser.add_argument('--backbone', type=str, default='hamer', choices=['hamer', 'vit-l-16', 'vit-b-16', 'vit-s-16', 'handoccnet', 'hrnet-w48', 'hrnet-w32', 'resnet-152', 'resnet-101', 'resnet-50', 'resnet-34', 'resnet-18'], help='backbone model')
+parser.add_argument('--detector', type=str, default='wilor', choices=['wilor', 'mediapipe'], help='detector model')
 parser.add_argument('--checkpoint', type=str, default='', help='model path for demo')
 parser.add_argument('--input_path', type=str, default='asset/example_images', help='image path for demo')
 args = parser.parse_args()
@@ -47,9 +48,16 @@ images = [f for f in os.listdir(input_dir) if f.lower().endswith(('.png', '.jpg'
 
 
 # Initialize MediaPipe HandLandmarker
-base_options = BaseOptions(model_asset_path=cfg.MODEL.hand_landmarker_path)
-hand_options = vision.HandLandmarkerOptions(base_options=base_options, num_hands=2)
-detector = vision.HandLandmarker.create_from_options(hand_options)
+if args.detector == 'wilor':
+    from ultralytics import YOLO
+    detector_path = f'data/base_data/demo_data/wilor_detector.pt'
+    detector = YOLO(detector_path)
+elif args.detector == 'mediapipe':
+    base_options = BaseOptions(model_asset_path=cfg.MODEL.hand_landmarker_path)
+    hand_options = vision.HandLandmarkerOptions(base_options=base_options, num_hands=2)
+    detector = vision.HandLandmarker.create_from_options(hand_options)
+else:
+    raise NotImplementedError(f"Unsupported detector: {args.detector}")
 
 
 ############# Model #############
@@ -75,9 +83,16 @@ for i, frame_name in tqdm(enumerate(images), total=len(images)):
     frame_name_base = os.path.splitext(frame_name)[0]
 
     # Hand landmark detection
-    mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=orig_img.copy())
-    detection_result = detector.detect(mp_image)
-    annotated_image, right_hand_bbox = draw_landmarks_on_image(orig_img.copy(), detection_result)
+    if args.detector == 'wilor':
+        right_hand_bbox = run_wilor_hand_detector(orig_img, detector)
+        annotated_image, right_hand_bbox = draw_landmarks_on_image_simple(orig_img.copy(), right_hand_bbox)
+    elif args.detector == 'mediapipe':
+        mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=orig_img.copy())
+        detection_result = detector.detect(mp_image)
+        annotated_image, right_hand_bbox = draw_landmarks_on_image(orig_img.copy(), detection_result)
+    else:
+        raise NotImplementedError(f"Unsupported detector: {args.detector}")
+    
 
     if right_hand_bbox is None:
         print(f"Skipping {frame_name} - no hand detected.")
