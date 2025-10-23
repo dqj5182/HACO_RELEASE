@@ -17,12 +17,13 @@ from lib.utils.eval_utils import evaluation
 
 parser = argparse.ArgumentParser(description='Test HACO')
 parser.add_argument('--backbone', type=str, default='hamer', choices=['hamer', 'vit-l-16', 'vit-b-16', 'vit-s-16', 'handoccnet', 'hrnet-w48', 'hrnet-w32', 'resnet-152', 'resnet-101', 'resnet-50', 'resnet-34', 'resnet-18'], help='backbone model')
+parser.add_argument('--test_name', type=str, default='MOW', help='dataset name for evaluation')
 parser.add_argument('--checkpoint', type=str, default='', help='model path for evaluation')
 args = parser.parse_args()
 
 
 # Import dataset
-exec(f'from data.{cfg.DATASET.test_name}.dataset import {cfg.DATASET.test_name}')
+exec(f'from data.{args.test_name}.dataset import {args.test_name}')
 
 
 # Set device as CUDA
@@ -33,13 +34,13 @@ os.environ["MKL_NUM_THREADS"] = "4" # Limit MKL operations
 
 
 # Initialize directories
-experiment_dir = f'experiments_test_{cfg.DATASET.test_name.lower()}'
+experiment_dir = f'experiments_test_{args.test_name.lower()}'
 checkpoint_dir = os.path.join(experiment_dir, 'full', 'checkpoints')
 os.makedirs(checkpoint_dir, exist_ok=True)
 
 
 # Load config
-update_config(backbone_type=args.backbone, exp_dir=experiment_dir)
+update_config(backbone_type=args.backbone, test_name=args.test_name, exp_dir=experiment_dir)
 
 
 ############## Dataset ###############

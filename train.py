@@ -12,7 +12,7 @@ from lib.core.config import cfg, update_config
 from lib.models.model import HACO
 from lib.core.base import compute_loss
 from data.dataset import MultipleDatasets
-from lib.utils.train_utils import get_optim_groups, get_transform, worker_init_fn
+from lib.utils.train_utils import get_optim_groups, get_transform, worker_init_fn, set_global_seed
 from lib.utils.log_utils import get_datetime
 
 
@@ -26,11 +26,19 @@ for i in range(len(cfg.DATASET.train_name)):
     exec(f'from data.{cfg.DATASET.train_name[i]}.dataset import {cfg.DATASET.train_name[i]}')
 
 
+# Global seeding at program start
+set_global_seed(cfg.TRAIN.seed)
+
+
 # Set device as CUDA
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 torch.set_num_threads(cfg.DATASET.workers) # Limit Torch
 os.environ["OMP_NUM_THREADS"] = "4" # Limit OpenMP (NumPy, MKL)
 os.environ["MKL_NUM_THREADS"] = "4" # Limit MKL operations
+
+# Make CUDA behavior deterministic where possible
+torch.backends.cudnn.benchmark = False
+torch.backends.cudnn.deterministic = True
 
 
 # Initialize directories
@@ -60,7 +68,10 @@ train_datasets = MultipleDatasets(train_datasets, make_same_len=False)
 
 
 ############# Dataloader #############
-train_dataloader = DataLoader(train_datasets, batch_size=cfg.TRAIN.batch, shuffle=True, num_workers=cfg.DATASET.workers, pin_memory=True, drop_last=True, worker_init_fn=worker_init_fn)
+g = torch.Generator()
+g.manual_seed(cfg.TRAIN.seed)
+
+train_dataloader = DataLoader(train_datasets, batch_size=cfg.TRAIN.batch, shuffle=True, generator=g, num_workers=cfg.DATASET.workers, pin_memory=True, drop_last=True, worker_init_fn=worker_init_fn)
 total_sample_num = len(train_dataloader) * cfg.TRAIN.batch
 ############# Dataloader #############
 

@@ -17,11 +17,9 @@
 
 <a href="https://huggingface.co/datasets/dqj5182/haco-checkpoints"><img src="https://img.shields.io/badge/%F0%9F%A4%97%20Model_Card-Huggingface-orange"></a> <a href="https://huggingface.co/spaces/dqj5182/HACO"><img src="https://img.shields.io/badge/%F0%9F%A4%97%20Gradio%20Demo-Huggingface-orange"></a> <a href="https://huggingface.co/papers/2505.11152"><img src="https://img.shields.io/badge/%F0%9F%A4%97%20Paper-Huggingface-orange"></a>
 
-[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/2505-11152/dense-contact-estimation-on-mow)](https://paperswithcode.com/sota/dense-contact-estimation-on-mow?p=2505-11152)
 
 
-
-<h2>ArXiv 2025</h2>
+<h2>NeurIPS 2025</h2>
 
 <img src="./asset/teaser.png" alt="Logo" width="75%">
 
@@ -40,7 +38,7 @@ conda create -n haco python=3.8 -y
 conda activate haco
 
 # Install PyTorch
-conda install pytorch==1.11.0 torchvision==0.12.0 torchaudio==0.11.0 cudatoolkit=11.3 -c pytorch
+pip install torch==1.11.0+cu113 torchvision==0.12.0+cu113 torchaudio==0.11.0 --extra-index-url https://download.pytorch.org/whl/cu113
 
 # Install all remaining packages
 pip install -r requirements.txt
@@ -53,7 +51,7 @@ You need to follow our directory structure of the `data`.
 * For evaluation: See [`docs/data_eval.md`](docs/data_eval.md).
 * For training: See [`docs/data_train.md`](docs/data_train.md).
 
-Then, download the official checkpoints and place them in the `release_checkpoint` from [HuggingFace](https://huggingface.co/datasets/dqj5182/haco-checkpoints/tree/main) by running (if not working, try [OneDrive](https://1drv.ms/u/c/bf7e2a9a100f1dba/Ef18aU5ItbFDgW1sSv3P0l0BGTzN6PlsCnm0q5ecpTWIfQ?e=Y40qsN)):
+Then, download the official checkpoints and place them in the `release_checkpoint` from [HuggingFace](https://huggingface.co/datasets/dqj5182/haco-checkpoints/tree/main) by running:
 ```
 bash scripts/download_haco_checkpoints.sh
 ```
@@ -68,16 +66,16 @@ python demo.py --backbone {BACKBONE_TYPE} --detector {DETECTOR_TYPE} --checkpoin
 For example,
 ```
 # ViT-H (Default, HaMeR initialized) backbone
-python demo.py --backbone hamer --detector wilor --checkpoint release_checkpoint/haco_final_hamer_checkpoint.ckpt --input_path asset/example_images
+python demo.py --backbone hamer --detector wilor --checkpoint release_checkpoint/haco_neurips_hamer_checkpoint.ckpt --input_path asset/example_images
 
 # ViT-B (ImageNet initialized) backbone
-python demo.py --backbone vit-b-16 --detector wilor --checkpoint release_checkpoint/haco_final_vit_b_checkpoint.ckpt --input_path asset/example_images
+python demo.py --backbone vit-b-16 --detector wilor --checkpoint release_checkpoint/haco_neurips_vit_b_checkpoint.ckpt --input_path asset/example_images
 ```
 
 > Note: The demo includes post-processing to reduce noise in small or sparse contact areas.
 
 ## Quick demo (Video)
-Before the video demo, please download example videos from [HuggingFace](https://huggingface.co/datasets/dqj5182/haco-data/blob/main/demo/asset/example_videos.zip) and save at `asset/example_videos` by running (if not working, try [OneDrive](https://1drv.ms/u/c/bf7e2a9a100f1dba/ERsk_D-EubxBi1Usu2bW2hABwy9nxzRxAHutXDxmv85TLw?e=rIjOI7)):
+Before the video demo, please download example videos from [HuggingFace](https://huggingface.co/datasets/dqj5182/haco-data/blob/main/demo/asset/example_videos.zip) and save at `asset/example_videos` by running:
 ```
 bash scripts/download_demo_example_videos.sh
 ```
@@ -90,10 +88,10 @@ python demo_video.py --backbone {BACKBONE_TYPE} --checkpoint {CKPT_PATH} --input
 For example,
 ```
 # ViT-H (Default, HaMeR initialized) backbone
-python demo_video.py --backbone hamer --checkpoint release_checkpoint/haco_final_hamer_checkpoint.ckpt --input_path asset/example_videos
+python demo_video.py --backbone hamer --checkpoint release_checkpoint/haco_neurips_hamer_checkpoint.ckpt --input_path asset/example_videos
 
 # ViT-B (ImageNet initialized) backbone
-python demo_video.py --backbone vit-b-16 --checkpoint release_checkpoint/haco_final_vit_b_checkpoint.ckpt --input_path asset/example_videos
+python demo_video.py --backbone vit-b-16 --checkpoint release_checkpoint/haco_neurips_vit_b_checkpoint.ckpt --input_path asset/example_videos
 ```
 
 > Note: The demo includes post-processing for both spatial smoothing of small contact areas and temporal smoothing across frames to ensure stable contact predictions and hand detections.
@@ -118,48 +116,48 @@ python train.py --backbone vit-b-16
 ```
 
 ### Test
-To evaluate HACO on [MOW](https://github.com/ZheC/MOW) dataset, please run:
+To evaluate HACO, please run:
 ```
-python test.py --backbone {BACKBONE_TYPE} --checkpoint {CKPT_PATH}
+python test.py --backbone {BACKBONE_TYPE} --checkpoint {CKPT_PATH} --test_name {DATASET_NAME}
 ```
 
 For example,
 ```
 # ViT-H (Default, HaMeR initialized) backbone
-python test.py --backbone hamer --checkpoint release_checkpoint/haco_final_hamer_checkpoint.ckpt
-
-# ViT-L (ImageNet initialized) backbone
-python test.py --backbone vit-l-16 --checkpoint release_checkpoint/haco_final_vit_l_checkpoint.ckpt
-
-# ViT-B (ImageNet initialized) backbone
-python test.py --backbone vit-b-16 --checkpoint release_checkpoint/haco_final_vit_b_checkpoint.ckpt
-
-# ViT-S (ImageNet initialized) backbone
-python test.py --backbone vit-s-16 --checkpoint release_checkpoint/haco_final_vit_s_checkpoint.ckpt
+python test.py --backbone hamer --checkpoint release_checkpoint/haco_neurips_hamer_checkpoint.ckpt --test_name MOW
 
 # FPN (HandOccNet initialized) backbone
-python test.py --backbone handoccnet --checkpoint release_checkpoint/haco_final_handoccnet_checkpoint.ckpt
+python test.py --backbone handoccnet --checkpoint release_checkpoint/haco_neurips_handoccnet_checkpoint.ckpt --test_name MOW
+
+# ViT-L (ImageNet initialized) backbone
+python test.py --backbone vit-l-16 --checkpoint release_checkpoint/haco_neurips_vit_l_checkpoint.ckpt --test_name MOW
+
+# ViT-B (ImageNet initialized) backbone
+python test.py --backbone vit-b-16 --checkpoint release_checkpoint/haco_neurips_vit_b_checkpoint.ckpt --test_name MOW
+
+# ViT-S (ImageNet initialized) backbone
+python test.py --backbone vit-s-16 --checkpoint release_checkpoint/haco_neurips_vit_s_checkpoint.ckpt --test_name MOW
 
 # HRNet-W48 (ImageNet initialized) backbone
-python test.py --backbone hrnet-w48 --checkpoint release_checkpoint/haco_final_hrnet_w48_checkpoint.ckpt
+python test.py --backbone hrnet-w48 --checkpoint release_checkpoint/haco_neurips_hrnet_w48_checkpoint.ckpt --test_name MOW
 
 # HRNet-W32 (ImageNet initialized) backbone
-python test.py --backbone hrnet-w32 --checkpoint release_checkpoint/haco_final_hrnet_w32_checkpoint.ckpt
+python test.py --backbone hrnet-w32 --checkpoint release_checkpoint/haco_neurips_hrnet_w32_checkpoint.ckpt --test_name MOW
 
 # ResNet-152 (ImageNet initialized) backbone
-python test.py --backbone resnet-152 --checkpoint release_checkpoint/haco_final_resnet_152_checkpoint.ckpt
+python test.py --backbone resnet-152 --checkpoint release_checkpoint/haco_neurips_resnet_152_checkpoint.ckpt --test_name MOW
 
 # ResNet-101 (ImageNet initialized) backbone
-python test.py --backbone resnet-101 --checkpoint release_checkpoint/haco_final_resnet_101_checkpoint.ckpt
+python test.py --backbone resnet-101 --checkpoint release_checkpoint/haco_neurips_resnet_101_checkpoint.ckpt --test_name MOW
 
 # ResNet-50 (ImageNet initialized) backbone
-python test.py --backbone resnet-50 --checkpoint release_checkpoint/haco_final_resnet_50_checkpoint.ckpt
+python test.py --backbone resnet-50 --checkpoint release_checkpoint/haco_neurips_resnet_50_checkpoint.ckpt --test_name MOW
 
 # ResNet-34 (ImageNet initialized) backbone
-python test.py --backbone resnet-34 --checkpoint release_checkpoint/haco_final_resnet_34_checkpoint.ckpt
+python test.py --backbone resnet-34 --checkpoint release_checkpoint/haco_neurips_resnet_34_checkpoint.ckpt --test_name MOW
 
 # ResNet-18 (ImageNet initialized) backbone
-python test.py --backbone resnet-18 --checkpoint release_checkpoint/haco_final_resnet_18_checkpoint.ckpt
+python test.py --backbone resnet-18 --checkpoint release_checkpoint/haco_neurips_resnet_18_checkpoint.ckpt --test_name MOW
 ```
 
 
@@ -180,9 +178,9 @@ We thank:
 ## Reference
 ```  
 @article{jung2025haco,    
-title = {Learning Dense Hand Contact Estimation from Imbalanced Data},
-author = {Jung, Daniel Sungho and Lee, Kyoung Mu},
-journal = {arXiv preprint arXiv:2505.11152},  
-year = {2025}  
+    title = {Learning Dense Hand Contact Estimation from Imbalanced Data},
+    author = {Jung, Daniel Sungho and Lee, Kyoung Mu},
+    journal = {Advances in Neural Information Processing Systems},  
+    year = {2025}  
 }  
 ```

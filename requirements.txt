@@ -9,7 +9,7 @@ chumpy
 pyyaml
 plyfile
 einops
-timm
+timm==1.0.14
 smplx
 gdown
 mediapipe
@@ -17,3 +17,4 @@ pyrender==0.1.33
 huggingface_hub
 pycocotools
 ultralytics
+rtree

@@ -624,7 +624,6 @@ class ContactTransformerDecoderHead(nn.Module):
 
         # Readout from token_out
         pred_contact = self.deccontact(token_out) + pred_contact
-        # pred_contact = pred_contact.sigmoid()
 
         # Joint contact
         pred_joint_contact = (torch.tensor(mano.joint_regressor, dtype=torch.float32, device=device) @ pred_contact.T).T

@@ -5,9 +5,22 @@ import numpy as np
 import torch
 import torchvision.transforms as transforms
 
+from lib.core.config import cfg
 
-def worker_init_fn(worder_id):
-    np.random.seed(np.random.get_state()[1][0] + worder_id)
+
+def worker_init_fn(worker_id: int):
+    base_seed = int(cfg.TRAIN.seed)
+    worker_seed = (base_seed + worker_id) % (2**32)
+    np.random.seed(worker_seed)
+    random.seed(worker_seed)
+    torch.manual_seed(worker_seed)
+
+
+def set_global_seed(seed: int):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
 
 
 def get_optim_groups(module):
@@ -76,6 +89,8 @@ def balanced_data(difficulty_factors, aligned_data, target_ratio=1.0):
         np.ndarray: Balanced dataset combining all folds.
         np.ndarray: Re-aligned data corresponding to the balanced difficulty list.
     """
+    np.random.seed(cfg.TRAIN.seed)
+
     # Ensure input is numpy array for proper indexing
     difficulty_factors = np.array(difficulty_factors, dtype=np.float32)
     aligned_data = np.array(aligned_data)
@@ -132,15 +147,17 @@ def balanced_data(difficulty_factors, aligned_data, target_ratio=1.0):
     return balanced_data_out[indices], balanced_aligned_data_out[indices]
 
 
-def get_contact_difficulty_sample_id(contact_data_path, contact_means_path):
+def get_contact_difficulty_sample_id(sample_id_to_split_id, contact_data_path, contact_means_path):
     contact_means = np.load(contact_means_path)
 
     sample_id_difficulty_list = []
     contact_difficulty_list = []
 
-    for each_file in os.listdir(contact_data_path):
-        sample_id = each_file.split('.npy')[0]
-        each_contact_data_path = os.path.join(contact_data_path, each_file)
+    for sample_id in sorted([*sample_id_to_split_id]):
+        # sample_id = each_file.split('.npy')[0]
+        each_contact_data_path = os.path.join(contact_data_path, f'{sample_id}.npy')
+        if not os.path.exists(each_contact_data_path): # TODO: SOLVE ISSUE ON THIS AND REMOVE THIS PART
+            continue
         each_contact_data = np.load(each_contact_data_path)
 
         if each_contact_data.sum() == 0:
@@ -151,7 +168,7 @@ def get_contact_difficulty_sample_id(contact_data_path, contact_means_path):
         sample_id_difficulty_list.append(sample_id)
         contact_difficulty_list.append(contact_difficulty)
 
-    contact_diff_pairs = sorted(zip(sample_id_difficulty_list, contact_difficulty_list), key=lambda x: x[1], reverse=True)
+    contact_diff_pairs = sorted(zip(sample_id_difficulty_list, contact_difficulty_list), key=lambda x: (-x[1], x[0]))
     sample_id_difficulty_list, contact_difficulty_list = zip(*contact_diff_pairs)
     sample_id_difficulty_list, contact_difficulty_list = list(sample_id_difficulty_list), list(contact_difficulty_list)
 

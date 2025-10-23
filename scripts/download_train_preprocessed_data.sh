@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Set directories
-TEMP_DIR="temp_haco_data"
+TEMP_DIR="temp_haco_train_data"
 TARGET_DIR="data"
 
 # Initialize git-lfs and clone dataset repo

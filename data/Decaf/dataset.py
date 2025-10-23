@@ -1,19 +1,10 @@
 import os
-import cv2
-import glob
+import json
 import numpy as np
-import pickle
-from tqdm import tqdm
-from scipy.spatial.transform import Rotation as R
 
 import torch
 from torch.utils.data import Dataset
-from torch.utils.data import DataLoader
-import torchvision.transforms as transforms
 from torchvision.transforms import Normalize
-
-import sys
-sys.path.append(os.getcwd())
 
 from lib.core.config import cfg
 from lib.utils.human_models import mano
@@ -31,6 +22,8 @@ def get_sample_id(split, index):
     return sample_id
 
 
+
+# Main dataloader code for Decaf dataset
 class Decaf(Dataset):
     def __init__(self, transform, data_split):
         super(Decaf, self).__init__()
@@ -43,16 +36,12 @@ class Decaf(Dataset):
         self.root_path = root_path = 'data/Decaf'
         self.data_dir = os.path.join(self.root_path, 'data')
 
+        self.contact_data_path = os.path.join(root_path, 'preprocessed_data', data_split, 'contact_data')
+
         self.mano_joints_name = ('wrist', 'thumb1', 'thumb2', 'thumb3', 'thumb4', 'index1', 'index2', 'index3', 'index4', 'middle1', 'middle2', 'middle3', 'middle4', 'ring1', 'ring2', 'ring3', 'ring4', 'pinky1', 'pinky2', 'pinky3', 'pinky4')
         
         seq_list = ['S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8']
         cam_list = ['084', '100', '102', '108', '110', '111', '121', '122']
-
-        # Do sampling as the data for train set is large
-        if data_split == 'train':
-            sampling_ratio = 5
-        else:
-            sampling_ratio = 1
 
         # Make db
         contact_rh_data = {seq: np.load(os.path.join(self.data_dir, self.data_split, 'contacts', seq, 'contacts_rh.npy')) for seq in seq_list}
@@ -63,38 +52,14 @@ class Decaf(Dataset):
             for cam in cam_list
         }
 
+        # Organize db id based on split
+        db_split_path = os.path.join(self.root_path, 'splits', f'{self.data_split}.json')
+        with open(db_split_path, 'r') as f:
+            db_keys = json.load(f)
 
-        self.db_contact = {}
-        self.db_bb = {}
-        for file in glob.glob("data/Decaf/data/train/params/*/params.pkl"):
-            with open(file, 'rb') as f:
-                data = pickle.load(f)
-                
-            seq = file.split('/')[-2]
-            
-            if seq not in contact_rh_data:
-                continue  # Skip sequences that have no contact data
-            
-            valid_indices = np.where(contact_rh_data[seq].sum(axis=1) > 0)[0]
-            
-            for idx in valid_indices:
-                img = list(data.keys())[idx]
-                for cam in cam_list:
-                    orig_img_path = os.path.join(self.data_dir, self.data_split, 'images', seq, cam, f'{img}.jpg')
-                    if not os.path.exists(orig_img_path):
-                        continue
-                    self.db_contact[f"{seq}_{cam}_{img}"] = contact_rh_data[seq][idx]
-                    self.db_bb[f"{seq}_{cam}_{img}"] = bb_rh_data[f"{seq}_{cam}"][idx]
+        self.split = list(db_keys)
 
-        # Apply sampling ratio
-        self.db_contact = {key: self.db_contact[key] for key in list(self.db_contact.keys())[::sampling_ratio]}
-        self.split = [*self.db_contact]
-
-        self.use_preprocessed_data = True
-        self.contact_data_path = os.path.join(root_path, 'preprocessed_data', data_split, 'contact_data')
-        os.makedirs(self.contact_data_path, exist_ok=True)
-
-        # Sort contact by difficulty
+        # Sort contact by difficulty (Balanced contact sampling)
         if self.data_split == 'train' and cfg.MODEL.balanced_sampling:
             sample_id_to_split_id = {}
             for split_idx in range(len(self.split)):
@@ -105,13 +70,15 @@ class Decaf(Dataset):
                     sample_id_to_split_id[each_sample_id] = self.split[split_idx]
 
             contact_means_path = os.path.join(f'data/base_data/contact_data/{dataset_name}/contact_means_{dataset_name}.npy')
-            sample_id_difficulty_list = get_contact_difficulty_sample_id(self.contact_data_path, contact_means_path)
+            sample_id_difficulty_list = get_contact_difficulty_sample_id(sample_id_to_split_id, self.contact_data_path, contact_means_path)
 
             new_split = [sample_id_to_split_id[key] for key in sample_id_difficulty_list if key in [*sample_id_to_split_id]]
             self.split = new_split
 
+
     def __len__(self):
         return len(self.split)
+
 
     def __getitem__(self, index):
         aid = self.split[index]
@@ -126,11 +93,23 @@ class Decaf(Dataset):
         img_shape = orig_img.shape[:2]
         img_h, img_w = img_shape
 
-        contact_rh = self.db_contact[sample_id].astype(np.float32)
-        bbox_rh = self.db_bb[sample_id].tolist() # GT bbox is in [x_min, y_min, x_max, y_max]
-        # Change from [x_min, y_min, x_max, y_max] to [x_min, y_min, width, height]
-        bbox_rh = np.array([bbox_rh[0], bbox_rh[1], bbox_rh[2]-bbox_rh[0], bbox_rh[3]-bbox_rh[1]])
+        mano_valid = np.ones((1), dtype=np.float32)
 
+
+        ################################## LOAD ANNOTATION DATA #####################################
+        db_contact_path = os.path.join(self.root_path, 'preprocessed_data', self.data_split, 'db_contact', f'{sample_id}.npy')
+        db_bb_path = os.path.join(self.root_path, 'preprocessed_data', self.data_split, 'db_bb', f'{sample_id}.npy')
+        db_contact = np.load(db_contact_path)
+        db_bb = np.load(db_bb_path)
+
+        contact_rh = db_contact.astype(np.float32)
+        bbox_rh = db_bb.tolist() # GT bbox is in [x_min, y_min, x_max, y_max]
+        bbox_rh = np.array([bbox_rh[0], bbox_rh[1], bbox_rh[2]-bbox_rh[0], bbox_rh[3]-bbox_rh[1]]) # Change from [x_min, y_min, x_max, y_max] to [x_min, y_min, width, height]
+        contact_data = dict(contact_h=contact_rh)
+        ################################## LOAD ANNOTATION DATA #####################################
+
+
+        ############################### PROCESS CROP AND AUGMENTATION ################################
         img, img2bb_trans, bb2img_trans, rot, do_flip, color_scale = augmentation_contact(orig_img.copy(), bbox_rh, self.data_split, enforce_flip=False)
         crop_img = img.copy()  
 
@@ -143,58 +122,12 @@ class Decaf(Dataset):
             img = normalize_img(torch.from_numpy(img)).float()
         else:
             raise NotImplementedError
-        
-        mano_valid = np.ones((1), dtype=np.float32)
+        ############################### PROCESS CROP AND AUGMENTATION ################################
 
-
-        contact_data = dict(contact_h=contact_rh)
-        
 
         input_data = dict(image=img)
         targets_data = dict(contact_data=contact_data)
         meta_info = dict(sample_id=sample_id, mano_valid=mano_valid)
 
+
         return dict(input_data=input_data, targets_data=targets_data, meta_info=meta_info)
-
-
-
-if __name__ == "__main__":
-    dataset_name = 'Decaf'
-    data_split = 'train'
-    task = 'debug'
-
-    transform = transforms.ToTensor()
-
-    dataset = eval(dataset_name)(transform, data_split)
-    dataloader = DataLoader(dataset, batch_size=1, shuffle=False, num_workers=cfg.DATASET.workers, pin_memory=False)
-    iterator = tqdm(enumerate(dataloader), total=len(dataloader), leave=False)
-
-    if task == 'debug':
-        for idx, data in iterator:
-            pass
-    elif task == 'save_contact_means':
-        contact_means_save_root_path = f'data/base_data/contact_data/{dataset_name.lower()}'
-        os.makedirs(contact_means_save_root_path, exist_ok=True)
-        contact_means_save_path = os.path.join(contact_means_save_root_path, f'contact_means_{dataset_name.lower()}.npy')
-        contact_h_list = []
-
-        for idx, data in iterator:
-            contact_h = data['targets_data']['contact_data']['contact_h'][0].tolist()
-            contact_h_list.append(contact_h)
-
-        contact_h_list = np.array(contact_h_list, dtype=np.float32)
-        contact_means = np.mean(contact_h_list, axis=0)
-        np.save(contact_means_save_path, contact_means)
-    elif task == 'save_contact_data':
-        contact_data_save_root_path = f'data/{dataset_name}/preprocessed_data/{data_split}/contact_data'
-        os.makedirs(contact_data_save_root_path, exist_ok=True)
-
-        for idx, data in iterator:
-            sample_id = data['meta_info']['sample_id'][0]
-            contact_h = data['targets_data']['contact_data']['contact_h'][0].tolist()
-            contact_h = np.array(contact_h, dtype=int)
-
-            contact_data_save_path = os.path.join(contact_data_save_root_path, f'{sample_id}.npy')
-            np.save(contact_data_save_path, contact_h)
-    else:
-        raise NotImplementedError

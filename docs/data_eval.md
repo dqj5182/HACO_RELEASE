@@ -4,41 +4,125 @@ You need to follow directory structure of the `data` as below.
 ${ROOT} 
 |-- data  
 |   |-- base_data
-|   |   |-- demo_data
-|   |   |   |-- hand_landmarker.task
-|   |   |-- human_models
-|   |   |   |-- mano
-|   |   |   |   |-- MANO_LEFT.pkl
-|   |   |   |   |-- MANO_RIGHT.pkl
-|   |   |   |   |-- V_regressor_84.npy
-|   |   |   |   |-- V_regressor_336.npy
-|   |   |-- pretrained_models
-|   |   |   |-- hamer
-|   |   |   |-- handoccnet
-|   |   |   |-- hrnet
-|   |   |   |-- pose2pose
+|   |-- MOW
+|   |   |-- data
+|   |   |-- preprocessed_data
+|   |   |-- splits
+|   |   |-- dataset.py
+|   |-- HIC
+|   |   |-- data
+|   |   |-- preprocessed_data
+|   |   |-- splits
+|   |   |-- dataset.py
+|   |-- RICH
+|   |   |-- data
+|   |   |-- preprocessed_data
+|   |   |-- splits
+|   |   |-- dataset.py
+|   |-- Hi4D
+|   |   |-- data
+|   |   |-- preprocessed_data
+|   |   |-- splits
+|   |   |-- dataset.py
+```
+* Download `base_data` from [HuggingFace](https://huggingface.co/datasets/dqj5182/haco-data/resolve/main/train/data/base_data.tar.gz) by running:
+```
+bash scripts/download_train_base_data.sh
+```
+#### preprocessed_data
+* Download `preprocessed_data` from [HuggingFace](https://huggingface.co/datasets/dqj5182/haco-data) by running:
+```
+bash scripts/download_train_preprocessed_data.sh
+```
+#### MOW dataset
+```
+${ROOT} 
+|-- data
 |   |-- MOW
 |   |   |-- data
 |   |   |   |-- images
 |   |   |   |-- masks
-|   |   |   |-- models
 |   |   |   |-- poses.json
-|   |   |   |-- watertight_models
 |   |   |-- preprocessed_data
 |   |   |   |-- test
 |   |   |   |   |-- contact_data
 |   |   |-- splits
+|   |   |   |-- test.json
 |   |   |-- dataset.py
 ```
-* Download `base_data` from [HuggingFace](https://huggingface.co/datasets/dqj5182/haco-data/resolve/main/train/data/base_data.tar.gz) by running (if not working, try [OneDrive](https://1drv.ms/u/c/bf7e2a9a100f1dba/Ea4_PNhv7ZJAkZDCbbn56ywBFLUqE_eivVxercSw3dZO1w?e=N9NSQj)):
-```
-bash scripts/download_train_base_data.sh
-```
-* Download [MOW](https://zhec.github.io/rhoi/) data from official GitHub ([images](https://github.com/ZheC/MOW), [models](https://github.com/ZheC/MOW), [poses.json](https://github.com/ZheC/MOW)) and OneDrive ([masks](https://1drv.ms/u/c/bf7e2a9a100f1dba/Ef2YhwccS4tPt1WrAAP4-iMBjcaSUgawDMnf_HDpqoTeNw?e=eQYJ4e), [watertight_models](https://1drv.ms/u/c/bf7e2a9a100f1dba/EW5YXeXtk3NBnX9PcvJtGIABj_9c1FW2RdrcppDgRzqHhg?e=ryUqCf), [preprocessed_data](https://1drv.ms/u/c/bf7e2a9a100f1dba/ESkqLhHk9gFHo4HH2uA9akABgYuS2wLgWfr4YJMRmagezQ?e=DoGFso), [splits](https://1drv.ms/u/c/bf7e2a9a100f1dba/EW60jCPiuNNOjkmCUdqlBbEBact_Ums22dwBoQoFMkUV6w?e=2lxpJd)). For GitHub data, you can directly download them by running:
+* Download `images`, `poses.json` by running:
 ```
 bash scripts/download_official_mow.sh
 ```
-* Download initial checkpoints by running:
+* `masks`, `preprocessed_data`, `splits` are already downloaded from [HuggingFace](https://huggingface.co/datasets/dqj5182/haco-data).
+#### HIC dataset
 ```
-bash scripts/download_initial_checkpoints.sh
+${ROOT} 
+|-- data
+|   |-- HIC
+|   |   |-- data
+|   |   |   |-- 01
+|   |   |   |-- ...
+|   |   |   |-- 12
+|   |   |   |-- IJCV16___Results_MANO___parms_for___joints21
+|   |   |   |-- HIC.json
+|   |   |-- preprocessed_data
+|   |   |   |-- test
+|   |   |   |   |-- annot_data
+|   |   |   |   |-- contact_data
+|   |   |-- splits
+|   |   |   |-- test.json
+|   |   |-- dataset.py
 ```
+* Download `data` by running:
+```
+bash scripts/download_official_hic.sh
+```
+* `preprocessed_data`, `splits` are already downloaded from [HuggingFace](https://huggingface.co/datasets/dqj5182/haco-data).
+#### RICH dataset
+```
+${ROOT} 
+|-- data
+|   |-- RICH
+|   |   |-- data
+|   |   |   |-- hsc
+|   |   |   |-- images_jpg_subset
+|   |   |   |-- multicam2world
+|   |   |   |-- scan_calibration
+|   |   |-- preprocessed_data
+|   |   |   |-- test
+|   |   |   |   |-- annot_data
+|   |   |   |   |-- contact_data
+|   |   |-- splits
+|   |   |   |-- test.json
+|   |   |-- dataset.py
+```
+* Download `data` by running:
+```
+bash scripts/download_official_rich.sh
+```
+* `preprocessed_data`, `splits` are already downloaded from [HuggingFace](https://huggingface.co/datasets/dqj5182/haco-data).
+#### Hi4D dataset
+```
+${ROOT} 
+|-- data
+|   |-- Hi4D
+|   |   |-- data
+|   |   |   |-- pair00
+|   |   |   |-- ...
+|   |   |   |-- pair37
+|   |   |-- preprocessed_data
+|   |   |   |-- test
+|   |   |   |   |-- annot_data
+|   |   |   |   |-- contact_data
+|   |   |-- splits
+|   |   |   |-- test.json
+|   |   |   |-- test_pid.json
+|   |   |-- dataset.py
+```
+* Download `data` by running after download request from [official website](https://yifeiyin04.github.io/Hi4D):
+```
+bash scripts/download_official_hi4d.sh
+bash scripts/extract_official_hi4d.sh
+```
+* `preprocessed_data`, `splits` are already downloaded from [HuggingFace](https://huggingface.co/datasets/dqj5182/haco-data).

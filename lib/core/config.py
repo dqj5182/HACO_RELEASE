@@ -13,7 +13,7 @@ cfg = edict()
 """ Dataset """
 cfg.DATASET = edict()
 cfg.DATASET.train_name = ['ObMan', 'DexYCB', 'HO3D', 'MOW', 'H2O3D', 'HOI4D', 'H2O', 'ARCTIC', 'InterHand26M', 'HIC', 'PROX', 'RICH', 'Decaf', 'Hi4D']
-cfg.DATASET.test_name = 'MOW' # ONLY TEST ONE DATASET AT A TIME
+cfg.DATASET.test_name = 'MOW' # ONLY TEST ONE DATASET AT A TIME. Currently support ['MOW', 'HIC', 'RICH', 'Hi4D']
 cfg.DATASET.workers = 2
 cfg.DATASET.ho_bbox_expand_ratio = 1.3
 cfg.DATASET.hand_bbox_expand_ratio = 1.3
@@ -64,8 +64,8 @@ cfg.TRAIN.milestones = (5, 10)
 cfg.TRAIN.step_size = 10
 cfg.TRAIN.gamma = 0.9
 cfg.TRAIN.betas = (0.9, 0.95)
-cfg.TRAIN.print_freq = 5
-
+cfg.TRAIN.print_freq = 1
+cfg.TRAIN.seed = 314 # for reproducibility
 cfg.TRAIN.loss_weight = 1.0
 
 
@@ -83,10 +83,13 @@ torch.backends.cudnn.benchmark = True
 logger = None
 
 
-def update_config(backbone_type='', exp_dir='', ckpt_path=''):
+def update_config(backbone_type='', test_name='', exp_dir='', ckpt_path=''):
     if backbone_type == '':
         backbone_type = 'hamer'
     cfg.MODEL.backbone_type = backbone_type
+    if test_name == '':
+        test_name = 'MOW'
+    cfg.DATASET.test_name = test_name
 
     global logger
     log_dir = os.path.join(exp_dir, 'log')
